@@ -1,10 +1,15 @@
 #!groovy
 
 pipeline {
-    agent any
-
-    tools {
-        maven "3.6.0" // You need to add a maven with name "3.6.0" in the Global Tools Configuration page
+    environment {
+        JAVA_TOOL_OPTIONS = "-Duser.home=/var/maven"
+    }
+    agent {
+        docker {
+            image "maven:3.6.0-jdk-13"
+            label "docker"
+            args "-v /tmp/maven:/var/maven/.m2 -e MAVEN_CONFIG=/var/maven/.m2"
+        }
     }
 
     stages {
@@ -14,17 +19,11 @@ pipeline {
                 sh "mvn clean install"
             }
         }
-        stage('Test') {
-            steps {
-                sh './gradlew check'
-            }
-        }
     }
 
     post {
         always {
             cleanWs()
-            junit 'build/reports/**/*.xml'
         }
     }
 }
